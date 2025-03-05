@@ -48,4 +48,13 @@ public class GreetingController {
     public Greeting saveGreeting(@RequestParam(required = false) String firstname, @RequestParam(required = false) String lastname){
         return greetingService.saveGreeting(firstname, lastname);
     }
+    @GetMapping("getId/{id}")
+    public Greeting getGreetingById(@PathVariable Long id){
+        return greetingService.getGreetById(id);
+    }
+    @GetMapping("/getAll")
+    public List<Greeting> getAllGreetings(){
+        return greetingService.getAllGreetings();
+    }
+
 }
