@@ -40,5 +40,8 @@ public class GreetingController {
     public String getSimpleGreet(){
         return simplegreet.getSimpleGreet();
     }
-
+    @GetMapping("/message")
+    public String getSimpleGreetWithName(@RequestParam(required=false) String firstname, @RequestParam(required = false) String lastname){
+        return simplegreet.getSimpleGreet(firstname,lastname);
+    }
 }
