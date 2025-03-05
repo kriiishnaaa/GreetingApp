@@ -44,4 +44,8 @@ public class GreetingController {
     public String getSimpleGreetWithName(@RequestParam(required=false) String firstname, @RequestParam(required = false) String lastname){
         return simplegreet.getSimpleGreet(firstname,lastname);
     }
+    @PostMapping("/save")
+    public Greeting saveGreeting(@RequestParam(required = false) String firstname, @RequestParam(required = false) String lastname){
+        return greetingService.saveGreeting(firstname, lastname);
+    }
 }
