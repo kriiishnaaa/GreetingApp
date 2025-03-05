@@ -34,5 +34,11 @@ public class GreetingController {
     public void deleteGreeting(@PathVariable Long ID){
         greetingRepo.deleteById(ID);
     }
+    @Autowired
+    private GreetingService simplegreet;
+    @GetMapping("/simple")
+    public String getSimpleGreet(){
+        return simplegreet.getSimpleGreet();
+    }
 
 }
