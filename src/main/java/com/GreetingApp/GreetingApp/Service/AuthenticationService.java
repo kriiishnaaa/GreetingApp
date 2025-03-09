@@ -1,11 +1,8 @@
 package com.GreetingApp.GreetingApp.Service;
 
-import com.GreetingApp.GreetingApp.DTO.AuthUserDTO;
-import com.GreetingApp.GreetingApp.DTO.LoginDTO;
-import com.GreetingApp.GreetingApp.Exception.UserException;
 import com.GreetingApp.GreetingApp.Model.AuthUser;
-import com.GreetingApp.GreetingApp.Repository.AuthUserRepository
-import com.GreetingApp.GreetingApp.Utils.JwtToken;
+import com.GreetingApp.GreetingApp.Repository.AuthUserRepository;
+import com.GreetingApp.GreetingApp.Security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,46 +10,47 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-public class AuthenticationService implements IAuthenticationService {
-    private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+public class AuthenticationService {
 
     @Autowired
-    AuthUserRepository authUserRepository;
+    private AuthUserRepository authUserRepository;
 
-    @Autowired
-    EmailSenderService emailSenderService;
+    @Autowired(required=true)
+    private JwtUtil jwtUtil;
 
-    @Autowired
-    JwtToken tokenUtil;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    @Override
-    public AuthUser register(AuthUserDTO userDTO) throws Exception{
+    // Register User
+    public String registerUser(AuthUser authUser) {
+        if (authUserRepository.existsByEmail(authUser.getEmail())) {
+            return "Email is already in use!";
+        }
 
-        String hashedPassword=encoder.encode(userDTO.getPassword());
-        AuthUser user=new AuthUser(userDTO);
-        user.setPassword(hashedPassword);
-        authUserRepository.save(user);
-        String token=tokenUtil.createToken(user.getUserId());
+//        AuthUser user = new AuthUser();
+//        user.setFirstName(authUser.getFirstName());
+//        user.setLastName(authUser.getLastName());
+//        user.setEmail(authUser.getEmail());
+//        user.setPassword(passwordEncoder.encode(authUser.getPassword())); // Encrypt password
+        authUserRepository.save(authUser);
 
-        emailSenderService.sendEmail(user.getEmail(),"Registered in Greeting App", "Hii...."
-                +user.getFirstName()+"\n You have been successfully registered!\n\n Your registered details are:\n\n User Id:  "
-                +user.getUserId()+"\n First Name:  "
-                +user.getFirstName()+"\n Last Name:  "
-                +user.getLastName()+"\n Email:  "
-                +user.getEmail()+"\n Address:  "
-                +"\n Token:  " +token);
-        return user;
+        return "User registered successfully!";
     }
 
-    @Override
-    public String login(LoginDTO loginDTO){
+    // Authenticate User and Generate Token
+    public String authenticateUser(String email, String password) {
+        Optional<AuthUser> userOpt = Optional.ofNullable(authUserRepository.findByEmail(email));
 
-        Optional<AuthUser> user= Optional.ofNullable(authUserRepository.findByEmail(loginDTO.getEmail()));
-        if (user.isPresent() && encoder.matches(loginDTO.getPassword(),user.get().getPassword())){
-            emailSenderService.sendEmail(user.get().getEmail(),"Logged in Successfully!", "Hii...."+user.get().getFirstName()+"\n\n You have successfully logged in into Greeting App!");
-            return "Congratulations!! You have logged in successfully!";
-        }else {
-            throw new UserException("Sorry! Email or Password is incorrect!");
+        if (userOpt.isEmpty()) {
+            return "User not found!";
         }
+
+        AuthUser user = userOpt.get();
+
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            return "Invalid email or password!";
+        }
+
+        // Generate JWT Token using HMAC256
+        return jwtUtil.generateToken(email);
     }
 }
